@@ -1,0 +1,24 @@
+override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    navigationController?.setNavigationBarHidden(false, animated: animated)
+
+    let calendar = Calendar.current
+    let startDate = project.startDate
+
+    var allTasks: [Task] = []
+    let group = DispatchGroup()
+
+    for i in 0..<14 {
+        guard let date = calendar.date(byAdding: .day, value: i, to: startDate) else { continue }
+
+        group.enter()
+        NetworkManager.shared.fetchTasks(for: project.shortId, date: date) { tasks in
+            allTasks.append(contentsOf: tasks)
+            group.leave()
+        }
+    }
+
+    group.notify(queue: .main) {
+        self.calendarView.updateTasks(allTasks)
+    }
+}
